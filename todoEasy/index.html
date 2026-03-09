@@ -1,1 +1,56 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Value Management Tool v2</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Value Management Dashboard</h1>
+        
+        <div class="grid-layout">
+            <section class="input-section">
+                <h2>Daten erfassen</h2>
+                <input type="text" id="funcName" placeholder="Funktion">
+                <input type="number" id="importance" placeholder="Wichtigkeit (1-10)">
+                <input type="number" id="cost" placeholder="Kosten (€)">
+                <button onclick="addFunction()">Hinzufügen</button>
+            </section>
 
+            <section class="chart-section">
+                <canvas id="valueChart"></canvas>
+            </section>
+        </div>
+
+        <section class="display-section">
+            <table id="valueTable">
+                <thead>
+                    <tr>
+                        <th>Funktion</th>
+                        <th>Wichtigkeit</th>
+                        <th>Kosten (€)</th>
+                        <th>Value Index</th>
+                        <th>Aktion</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </section>
+
+        <footer class="footer-tools">
+            <div id="qrcode-container">
+                <p>Scan mich für Mobil-Zugang:</p>
+                <div id="qrcode"></div>
+            </div>
+            <div class="summary-box">
+                <p>Gesamtkosten: <span id="totalCost">0</span> €</p>
+            </div>
+        </footer>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
