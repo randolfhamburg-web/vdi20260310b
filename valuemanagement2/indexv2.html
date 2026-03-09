@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wertanalyse Dashboard · VDI 2800</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #dbeafe;
+    --surface: #f0f7ff;
+    --surface2: #dbeafe;
+    --border: #93c5fd;
+    --accent: #1d4ed8;
+    --accent2: #b45309;
+    --danger: #dc2626;
+    --success: #15803d;
+    --text: #0f172a;
+    --text2: #1e3a5f;
+    --text3: #374151;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'IBM Plex Sans', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 14.5px;
+    line-height: 1.6;
+    font-weight: 400;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Header ── */
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 20px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #1d4ed8;
+  }
+
+  .logo-main {
+    font-family: var(--mono);
+    font-weight: 600;
+    font-size: 18px;
+    letter-spacing: -0.5px;
+    color: #fff;
+  }
+  .logo-sub {
+    font-size: 11px;
+    color: #bfdbfe;
+    font-family: var(--mono);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+  .badge {
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 3px 8px;
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 3px;
+    color: #bfdbfe;
+    letter-spacing: 1px;
+  }
+
+  /* ── Layout ── */
+  .container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 32px 40px;
+  }
+
+  .grid-main {
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    gap: 24px;
+    margin-bottom: 24px;
+  }
+
+  .grid-charts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 24px;
+  }
+
+  /* ── Cards ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 24px;
+  }
+
+  .card-title {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-title::before {
+    content: '';
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+  }
+
+  /* ── Phase indicator ── */
+  .phases {
+    display: flex;
+    gap: 0;
+    margin-bottom: 28px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .phase {
+    flex: 1;
+    padding: 8px 4px;
+    text-align: center;
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.5px;
+    color: #374151;
+    background: #dbeafe;
+    border-right: 1px solid var(--border);
+    cursor: pointer;
+    transition: all 0.15s;
+    line-height: 1.3;
+  }
+  .phase:last-child { border-right: none; }
+  .phase.active {
+    background: var(--accent);
+    color: #fff;
+  }
+  .phase-num {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 2px;
+  }
+
+  /* ── Form ── */
+  .form-group {
+    margin-bottom: 14px;
+  }
+  label {
+    display: block;
+    font-size: 11px;
+    color: var(--text2);
+    margin-bottom: 5px;
+    font-family: var(--mono);
+    letter-spacing: 0.5px;
+  }
+  label .hint {
+    color: var(--text3);
+    font-size: 10px;
+    margin-left: 6px;
+  }
+
+  input, select {
+    width: 100%;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 9px 12px;
+    color: #0f172a;
+    font-family: var(--mono);
+    font-size: 13px;
+    transition: border-color 0.15s;
+    outline: none;
+    -webkit-appearance: none;
+  }
+  input:focus, select:focus {
+    border-color: var(--accent);
+  }
+
+  .input-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .btn {
+    width: 100%;
+    padding: 10px;
+    background: var(--accent);
+    border: none;
+    border-radius: 4px;
+    color: #fff;
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: opacity 0.15s;
+    margin-top: 6px;
+  }
+  .btn:hover { opacity: 0.85; }
+  .btn-secondary {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text2);
+  }
+
+  .func-type-selector {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    margin-bottom: 14px;
+  }
+  .type-btn {
+    padding: 8px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--surface2);
+    color: var(--text3);
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.15s;
+  }
+  .type-btn.active {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(59,130,246,0.1);
+  }
+  .type-btn.neben.active {
+    border-color: var(--accent2);
+    color: var(--accent2);
+    background: rgba(245,158,11,0.1);
+  }
+
+  /* ── Summary KPIs ── */
+  .kpi-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .kpi {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px 20px;
+  }
+  .kpi-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin-bottom: 6px;
+  }
+  .kpi-value {
+    font-family: var(--mono);
+    font-size: 26px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .kpi-value.good { color: var(--success); }
+  .kpi-value.warn { color: var(--accent2); }
+  .kpi-value.bad { color: var(--danger); }
+  .kpi-sub {
+    font-size: 11px;
+    color: var(--text3);
+    margin-top: 2px;
+  }
+
+  /* ── Table ── */
+  .table-wrap { overflow-x: auto; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  th {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text3);
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  td {
+    padding: 12px 14px;
+    border-bottom: 1px solid #bfdbfe;
+    font-size: 13.5px;
+    color: #0f172a;
+    vertical-align: middle;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+
+  .tag {
+    display: inline-block;
+    padding: 2px 7px;
+    border-radius: 3px;
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+  .tag-haupt { background: rgba(59,130,246,0.15); color: var(--accent); border: 1px solid rgba(59,130,246,0.3); }
+  .tag-neben { background: rgba(245,158,11,0.15); color: var(--accent2); border: 1px solid rgba(245,158,11,0.3); }
+
+  .vi-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .vi-track {
+    flex: 1;
+    height: 6px;
+    background: #bfdbfe;
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .vi-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.4s ease;
+  }
+  .vi-num {
+    font-family: var(--mono);
+    font-size: 11px;
+    min-width: 40px;
+    text-align: right;
+  }
+
+  .delta-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .delta-pos { background: rgba(34,197,94,0.15); color: var(--success); }
+  .delta-neg { background: rgba(239,68,68,0.15); color: var(--danger); }
+  .delta-ok  { background: rgba(148,163,184,0.1); color: var(--text3); }
+
+  .btn-del {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 4px 8px;
+    color: var(--text3);
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.15s;
+  }
+  .btn-del:hover { border-color: var(--danger); color: var(--danger); }
+
+  /* ── Chart containers ── */
+  .chart-wrap {
+    position: relative;
+    height: 260px;
+  }
+
+  /* ── Methodology note ── */
+  .method-note {
+    background: rgba(29,78,216,0.07);
+    border: 1px solid rgba(29,78,216,0.25);
+    border-radius: 6px;
+    padding: 14px 18px;
+    font-size: 12px;
+    color: #1e3a5f;
+    line-height: 1.6;
+    margin-bottom: 24px;
+  }
+  .method-note strong { color: var(--accent); }
+
+  /* ── Empty state ── */
+  .empty {
+    text-align: center;
+    padding: 40px;
+    color: #374151;
+    font-family: var(--mono);
+    font-size: 12px;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 900px) {
+    .grid-main { grid-template-columns: 1fr; }
+    .grid-charts { grid-template-columns: 1fr; }
+    .kpi-row { grid-template-columns: 1fr 1fr; }
+    header, .container { padding: 16px 20px; }
+  }
+
+  /* ── Animations ── */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .card { animation: fadeIn 0.3s ease both; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="logo-main">Wertanalyse Dashboard</span>
+    <span class="logo-sub">VDI 2800 · DIN EN 12973</span>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center;">
+    <span class="badge">Funktionskostenanalyse</span>
+    <button class="btn btn-secondary" style="width:auto;padding:6px 14px;font-size:11px;" onclick="loadExample()">Beispiel laden</button>
+    <button class="btn btn-secondary" style="width:auto;padding:6px 14px;font-size:11px;" onclick="exportCSV()">↓ CSV</button>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- Methodenhinweis -->
+  <div class="method-note">
+    <strong>Methodik:</strong> Value Index = <strong>Relativer Funktionswert (%) / Relativer Funktionskostenanteil (%)</strong>.
+    Wert &gt; 1,0 → Unterbewertet (Kostenpotenzial erschöpft). Wert &lt; 1,0 → Optimierungsbedarf.
+    Wichtigkeiten werden normiert (Summe = 100%). Haupt- und Nebenfunktionen werden separat ausgewiesen.
+  </div>
+
+  <!-- Arbeitsplan-Phasen -->
+  <div class="phases" id="phases">
+    <div class="phase active" onclick="setPhase(0)"><span class="phase-num">1</span>Vorbereitung</div>
+    <div class="phase" onclick="setPhase(1)"><span class="phase-num">2</span>Bestandsaufnahme</div>
+    <div class="phase" onclick="setPhase(2)"><span class="phase-num">3</span>Funktionsanalyse</div>
+    <div class="phase" onclick="setPhase(3)"><span class="phase-num">4</span>Kostenzuordnung</div>
+    <div class="phase" onclick="setPhase(4)"><span class="phase-num">5</span>Ideenfindung</div>
+    <div class="phase" onclick="setPhase(5)"><span class="phase-num">6</span>Bewertung</div>
+    <div class="phase" onclick="setPhase(6)"><span class="phase-num">7</span>Realisierung</div>
+  </div>
+
+  <!-- KPIs -->
+  <div class="kpi-row">
+    <div class="kpi">
+      <div class="kpi-label">Gesamtkosten (Ist)</div>
+      <div class="kpi-value" id="kpi-total">—</div>
+      <div class="kpi-sub">Summe aller Ist-Kosten</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Kostenziel (Soll)</div>
+      <div class="kpi-value" id="kpi-target" style="color:var(--accent2)">—</div>
+      <div class="kpi-sub">Vorgabe Zielkosten</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Einsparpotenzial</div>
+      <div class="kpi-value" id="kpi-savings">—</div>
+      <div class="kpi-sub">Ist − Soll</div>
+    </div>
+  </div>
+
+  <!-- Main grid: Form + Tabelle -->
+  <div class="grid-main">
+
+    <!-- Eingabe -->
+    <div class="card">
+      <div class="card-title">Funktion erfassen</div>
+
+      <div class="form-group">
+        <label>Funktionstyp</label>
+        <div class="func-type-selector">
+          <div class="type-btn active" id="btn-haupt" onclick="setType('HAUPT')">▲ Hauptfunktion</div>
+          <div class="type-btn neben" id="btn-neben" onclick="setType('NEBEN')">◆ Nebenfunktion</div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Funktion <span class="hint">(Verb + Substantiv)</span></label>
+        <input type="text" id="f-name" placeholder="z. B. „Kraft übertragen"" />
+      </div>
+
+      <div class="input-row">
+        <div class="form-group">
+          <label>Wichtigkeit <span class="hint">(1–100)</span></label>
+          <input type="number" id="f-weight" placeholder="z. B. 80" min="1" max="100" />
+        </div>
+        <div class="form-group">
+          <label>Ist-Kosten <span class="hint">(€)</span></label>
+          <input type="number" id="f-cost" placeholder="z. B. 150" min="0" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Soll-Kosten / Zielkosten <span class="hint">(€, optional)</span></label>
+        <input type="number" id="f-target" placeholder="z. B. 100" min="0" />
+      </div>
+
+      <button class="btn" onclick="addFunction()">+ Funktion hinzufügen</button>
+
+      <div style="margin-top:20px;padding-top:20px;border-top:1px solid var(--border)">
+        <div class="card-title" style="margin-bottom:12px;">Projekt-Zielkosten gesamt</div>
+        <div class="input-row">
+          <input type="number" id="proj-target" placeholder="Gesamt-Soll (€)" min="0" />
+          <button class="btn btn-secondary" style="margin-top:0" onclick="setProjectTarget()">Setzen</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabelle -->
+    <div class="card">
+      <div class="card-title">Funktionskostentabelle</div>
+      <div class="table-wrap">
+        <table id="func-table">
+          <thead>
+            <tr>
+              <th>Funktion</th>
+              <th>Typ</th>
+              <th>Gewicht %</th>
+              <th>Ist €</th>
+              <th>Soll €</th>
+              <th>Ist %</th>
+              <th>Value Index</th>
+              <th>Δ Soll</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="func-tbody">
+            <tr><td colspan="9" class="empty">Noch keine Funktionen erfasst.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Charts -->
+  <div class="grid-charts">
+    <div class="card">
+      <div class="card-title">Funktionskostendiagramm (Ist vs. Soll)</div>
+      <div class="chart-wrap"><canvas id="chart-main"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Value Index je Funktion</div>
+      <div class="chart-wrap"><canvas id="chart-vi"></canvas></div>
+    </div>
+  </div>
+
+  <div class="grid-charts">
+    <div class="card">
+      <div class="card-title">Kostenverteilung (Ist)</div>
+      <div class="chart-wrap"><canvas id="chart-pie"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Optimierungspotenzial (Ist − Soll)</div>
+      <div class="chart-wrap"><canvas id="chart-opt"></canvas></div>
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────────
+let functions = [];
+let funcType = 'HAUPT';
+let projectTarget = null;
+let charts = {};
+
+// ── UI helpers ─────────────────────────────────────────────────────────────
+function setType(t) {
+  funcType = t;
+  document.getElementById('btn-haupt').classList.toggle('active', t === 'HAUPT');
+  document.getElementById('btn-neben').classList.toggle('active', t === 'NEBEN');
+}
+
+function setPhase(i) {
+  document.querySelectorAll('.phase').forEach((el, idx) => {
+    el.classList.toggle('active', idx === i);
+  });
+}
+
+function setProjectTarget() {
+  const v = parseFloat(document.getElementById('proj-target').value);
+  if (!isNaN(v) && v > 0) { projectTarget = v; render(); }
+}
+
+// ── Core data logic ────────────────────────────────────────────────────────
+function addFunction() {
+  const name   = document.getElementById('f-name').value.trim();
+  const weight = parseFloat(document.getElementById('f-weight').value);
+  const cost   = parseFloat(document.getElementById('f-cost').value);
+  const target = parseFloat(document.getElementById('f-target').value);
+
+  if (!name || isNaN(weight) || isNaN(cost)) {
+    alert('Bitte Funktion, Wichtigkeit und Ist-Kosten angeben.');
+    return;
+  }
+  functions.push({
+    id: Date.now(),
+    name, weight, cost,
+    target: isNaN(target) ? null : target,
+    type: funcType
+  });
+
+  ['f-name','f-weight','f-cost','f-target'].forEach(id => document.getElementById(id).value = '');
+  render();
+}
+
+function deleteFunction(id) {
+  functions = functions.filter(f => f.id !== id);
+  render();
+}
+
+function compute() {
+  const totalWeight = functions.reduce((s, f) => s + f.weight, 0) || 1;
+  const totalCost   = functions.reduce((s, f) => s + f.cost, 0)   || 1;
+
+  return functions.map(f => {
+    const relWeight = f.weight / totalWeight;      // normierter Funktionswert
+    const relCost   = f.cost   / totalCost;        // relativer Kostenanteil
+    const vi        = relCost > 0 ? relWeight / relCost : null;
+    const delta     = f.target != null ? f.cost - f.target : null;
+    return { ...f, relWeight, relCost, vi, delta };
+  });
+}
+
+// ── Render ─────────────────────────────────────────────────────────────────
+function render() {
+  const data = compute();
+  renderKPIs(data);
+  renderTable(data);
+  renderCharts(data);
+}
+
+function renderKPIs(data) {
+  const totalIst = data.reduce((s, f) => s + f.cost, 0);
+  const totalSoll = data.reduce((s, f) => s + (f.target ?? f.cost), 0);
+  const pt = projectTarget ?? totalSoll;
+
+  document.getElementById('kpi-total').textContent = fmt(totalIst);
+  document.getElementById('kpi-target').textContent = fmt(pt);
+
+  const savings = totalIst - pt;
+  const el = document.getElementById('kpi-savings');
+  el.textContent = (savings >= 0 ? '−' : '+') + fmt(Math.abs(savings));
+  el.className = 'kpi-value ' + (savings > 0 ? 'bad' : savings < 0 ? 'good' : 'ok');
+}
+
+function renderTable(data) {
+  const tbody = document.getElementById('func-tbody');
+  if (data.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="9" class="empty">Noch keine Funktionen erfasst.</td></tr>';
+    return;
+  }
+
+  const maxVI = Math.max(...data.map(d => d.vi ?? 0));
+
+  tbody.innerHTML = data.map(d => {
+    const viColor = d.vi == null ? '#374151' : d.vi > 1.15 ? '#dc2626' : d.vi < 0.85 ? '#15803d' : '#374151';
+    const viPct = maxVI > 0 ? (d.vi / maxVI) * 100 : 0;
+    const deltaHtml = d.delta == null ? '<span style="color:var(--text3)">—</span>'
+      : d.delta > 0
+        ? `<span class="delta-pill delta-neg">−${fmt(d.delta)}</span>`
+        : d.delta < 0
+          ? `<span class="delta-pill delta-pos">+${fmt(Math.abs(d.delta))}</span>`
+          : `<span class="delta-pill delta-ok">✓</span>`;
+
+    return `<tr>
+      <td style="font-weight:500">${d.name}</td>
+      <td><span class="tag tag-${d.type.toLowerCase()}">${d.type}</span></td>
+      <td style="font-family:var(--mono)">${(d.relWeight * 100).toFixed(1)}%</td>
+      <td style="font-family:var(--mono)">${fmt(d.cost)}</td>
+      <td style="font-family:var(--mono)">${d.target != null ? fmt(d.target) : '<span style="color:var(--text3)">—</span>'}</td>
+      <td style="font-family:var(--mono)">${(d.relCost * 100).toFixed(1)}%</td>
+      <td>
+        <div class="vi-bar">
+          <div class="vi-track"><div class="vi-fill" style="width:${viPct}%;background:${viColor}"></div></div>
+          <span class="vi-num" style="color:${viColor}">${d.vi != null ? d.vi.toFixed(3) : '—'}</span>
+        </div>
+      </td>
+      <td>${deltaHtml}</td>
+      <td><button class="btn-del" onclick="deleteFunction(${d.id})">✕</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function renderCharts(data) {
+  if (data.length === 0) {
+    ['chart-main','chart-vi','chart-pie','chart-opt'].forEach(id => {
+      if (charts[id]) { charts[id].destroy(); delete charts[id]; }
+    });
+    return;
+  }
+
+  const labels  = data.map(d => d.name);
+  const palette = ['#3b82f6','#f59e0b','#22c55e','#a78bfa','#f43f5e','#06b6d4','#fb923c','#84cc16'];
+  const colors  = data.map((_, i) => palette[i % palette.length]);
+
+  const chartDefaults = {
+    plugins: { legend: { labels: { color: '#1e3a5f', font: { family: 'IBM Plex Mono', size: 11 } } } },
+    scales: {
+      x: { ticks: { color: '#374151', font: { family: 'IBM Plex Mono', size: 10 } }, grid: { color: '#bfdbfe' } },
+      y: { ticks: { color: '#374151', font: { family: 'IBM Plex Mono', size: 10 } }, grid: { color: '#bfdbfe' }, beginAtZero: true }
+    }
+  };
+
+  // 1) Funktionskostendiagramm: Ist vs Soll
+  const istCostPct  = data.map(d => +(d.relCost * 100).toFixed(2));
+  const sollCostPct = data.map(d => d.target != null ? +(d.target / data.reduce((s,f)=>s+f.cost,0) * 100).toFixed(2) : null);
+  const wertPct     = data.map(d => +(d.relWeight * 100).toFixed(2));
+
+  makeChart('chart-main', 'bar', {
+    labels,
+    datasets: [
+      { label: 'Ist-Kostenanteil %', data: istCostPct, backgroundColor: 'rgba(59,130,246,0.7)', borderColor: '#3b82f6', borderWidth: 1 },
+      { label: 'Soll-Kostenanteil %', data: sollCostPct, backgroundColor: 'rgba(245,158,11,0.6)', borderColor: '#f59e0b', borderWidth: 1 },
+      { label: 'Funktionswertanteil %', data: wertPct, backgroundColor: 'rgba(34,197,94,0.4)', borderColor: '#22c55e', borderWidth: 1.5, type: 'line', pointRadius: 5, tension: 0.1 }
+    ]
+  }, { ...chartDefaults });
+
+  // 2) Value Index
+  const viData  = data.map(d => d.vi != null ? +d.vi.toFixed(3) : 0);
+  const viBg    = viData.map(v => v > 1.15 ? 'rgba(239,68,68,0.7)' : v < 0.85 ? 'rgba(34,197,94,0.7)' : 'rgba(148,163,184,0.5)');
+  makeChart('chart-vi', 'bar', {
+    labels,
+    datasets: [{ label: 'Value Index (Nutzen/Kosten)', data: viData, backgroundColor: viBg, borderWidth: 0 }]
+  }, {
+    ...chartDefaults,
+    plugins: {
+      ...chartDefaults.plugins,
+      annotation: {},
+      legend: chartDefaults.plugins.legend
+    },
+    scales: {
+      ...chartDefaults.scales,
+      y: { ...chartDefaults.scales.y,
+        ticks: { ...chartDefaults.scales.y.ticks,
+          callback: v => v.toFixed(2)
+        }
+      }
+    }
+  });
+
+  // 3) Pie: Kostenverteilung Ist
+  makeChart('chart-pie', 'doughnut', {
+    labels,
+    datasets: [{ data: data.map(d => d.cost), backgroundColor: colors.map(c => c + 'bb'), borderColor: colors, borderWidth: 2 }]
+  }, {
+    plugins: { legend: { position: 'right', labels: { color: '#1e3a5f', font: { family: 'IBM Plex Mono', size: 10 }, padding: 12 } } },
+    cutout: '55%'
+  });
+
+  // 4) Optimierungspotenzial
+  const optData = data.map(d => d.delta != null ? +d.delta.toFixed(2) : 0);
+  const optBg   = optData.map(v => v > 0 ? 'rgba(239,68,68,0.7)' : v < 0 ? 'rgba(34,197,94,0.5)' : 'rgba(148,163,184,0.3)');
+  makeChart('chart-opt', 'bar', {
+    labels,
+    datasets: [{ label: 'Ist − Soll (€)', data: optData, backgroundColor: optBg, borderWidth: 0 }]
+  }, { ...chartDefaults });
+}
+
+function makeChart(id, type, chartData, options) {
+  if (charts[id]) charts[id].destroy();
+  const ctx = document.getElementById(id).getContext('2d');
+  charts[id] = new Chart(ctx, { type, data: chartData, options: { ...options, responsive: true, maintainAspectRatio: false } });
+}
+
+// ── Utils ──────────────────────────────────────────────────────────────────
+function fmt(v) { return v.toLocaleString('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }); }
+
+function exportCSV() {
+  const data = compute();
+  const rows = [['Funktion','Typ','Wichtigkeit','Ist-Kosten','Soll-Kosten','Relativ Gewicht %','Relativ Kosten %','Value Index','Delta']];
+  data.forEach(d => rows.push([
+    d.name, d.type, d.weight, d.cost, d.target ?? '', 
+    (d.relWeight*100).toFixed(2), (d.relCost*100).toFixed(2),
+    d.vi?.toFixed(3) ?? '', d.delta ?? ''
+  ]));
+  const csv = rows.map(r => r.join(';')).join('\n');
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'wertanalyse_export.csv'; a.click();
+}
+
+function loadExample() {
+  functions = [
+    { id: 1, name: 'Kraft übertragen',    weight: 80, cost: 420, target: 380, type: 'HAUPT' },
+    { id: 2, name: 'Gewicht minimieren',  weight: 60, cost: 890, target: 600, type: 'HAUPT' },
+    { id: 3, name: 'Korrosion verhindern',weight: 40, cost: 130, target: 120, type: 'HAUPT' },
+    { id: 4, name: 'Montage ermöglichen', weight: 30, cost: 210, target: 150, type: 'NEBEN' },
+    { id: 5, name: 'Signal übertragen',   weight: 15, cost:  80, target:  80, type: 'NEBEN' },
+  ];
+  projectTarget = 1330;
+  document.getElementById('proj-target').value = 1330;
+  render();
+}
+</script>
+</body>
+</html>
