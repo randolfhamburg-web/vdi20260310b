@@ -1,3 +1,7 @@
+# laufende Erläuterung
+1.Aufruf der Webapp
+* https://randolfhamburg-web.github.io/vdi20260310b/valuemanagement/index.html
+
 # Uhrzeit-App mit QR-Code
 
 Eine einfache Web-App, die die aktuelle Uhrzeit anzeigt und einen QR-Code generiert, um die App schnell auf anderen Geräten zu öffnen.
